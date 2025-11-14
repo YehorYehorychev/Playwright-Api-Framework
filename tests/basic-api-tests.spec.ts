@@ -25,7 +25,8 @@ test("GET All Articles", async ({ request }) => {
 });
 
 // ---------------------------- POST ------------------------------------
-test("POST Create an Article", async ({ request }) => {
+test("POST Create an Article and verify via GET", async ({ request }) => {
+  // Login and get JWT
   const tokenResponse = await request.post(
     "https://conduit-api.bondaracademy.com/api/users/login",
     {
@@ -35,31 +36,44 @@ test("POST Create an Article", async ({ request }) => {
     }
   );
 
-  const tokenResponseJson = await tokenResponse.json();
   expect(tokenResponse.status()).toBe(200);
+  const jwtToken = (await tokenResponse.json()).user.token;
+  console.log(`Obtained JWT Token: ${jwtToken}`);
 
-  const jwtToken = tokenResponseJson.user.token;
-  console.log(`The Auth token is: ${jwtToken}`);
+  // Create unique article
+  const uniqueTitle = `Yehor Test ${Date.now()}`;
 
   const newArticleResponse = await request.post(
-    "https://conduit-api.bondaracademy.com/api/articles/",
+    "https://conduit-api.bondaracademy.com/api/articles",
     {
       data: {
         article: {
-          title: "Yehor's API Test",
+          title: uniqueTitle,
           description: "Test Description",
           body: "description of the test article",
-          tagList: [],
+          tagList: ["playwright", "automation"],
         },
       },
-      headers: {
-        Authorization: `Token ${jwtToken}`,
-      },
+      headers: { Authorization: `Token ${jwtToken}` },
     }
   );
 
-  const newArticleResponseJson = await newArticleResponse.json();
+  const newArticleJson = await newArticleResponse.json();
+  const slug = newArticleJson.article.slug;
+
   expect(newArticleResponse.status()).toBe(201);
-  expect(newArticleResponseJson.article.title).toBe("Yehor's API Test");
-  console.log(newArticleResponseJson);
+  expect(newArticleJson.article.title).toBe(uniqueTitle);
+  console.log(`Created article with slug: ${slug}`);
+
+  // Verify via GET article by SLUG
+  const getArticleResponse = await request.get(
+    `https://conduit-api.bondaracademy.com/api/articles/${slug}`
+  );
+
+  expect(getArticleResponse.status()).toBe(200);
+
+  const getArticleJson = await getArticleResponse.json();
+
+  expect(getArticleJson.article.title).toBe(uniqueTitle);
+  console.log(`Verified article found via slug: ${slug}`);
 });
