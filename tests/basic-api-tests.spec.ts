@@ -1,6 +1,6 @@
 import { test, expect, request } from "@playwright/test";
 
-// GET
+// ---------------------------- GET ------------------------------------
 test("GET Tags", async ({ request }) => {
   const tagsResponse = await request.get(
     "https://conduit-api.bondaracademy.com/api/tags"
@@ -24,7 +24,7 @@ test("GET All Articles", async ({ request }) => {
   expect(articleResponseJson.articles[0].author.username).toBe("Artem Bondar");
 });
 
-// POST
+// ---------------------------- POST ------------------------------------
 test("POST Create an Article", async ({ request }) => {
   const tokenResponse = await request.post(
     "https://conduit-api.bondaracademy.com/api/users/login",
@@ -40,4 +40,26 @@ test("POST Create an Article", async ({ request }) => {
 
   const jwtToken = tokenResponseJson.user.token;
   console.log(`The Auth token is: ${jwtToken}`);
+
+  const newArticleResponse = await request.post(
+    "https://conduit-api.bondaracademy.com/api/articles/",
+    {
+      data: {
+        article: {
+          title: "Yehor's API Test",
+          description: "Test Description",
+          body: "description of the test article",
+          tagList: [],
+        },
+      },
+      headers: {
+        Authorization: `Token ${jwtToken}`,
+      },
+    }
+  );
+
+  const newArticleResponseJson = await newArticleResponse.json();
+  expect(newArticleResponse.status()).toBe(201);
+  expect(newArticleResponseJson.article.title).toBe("Yehor's API Test");
+  console.log(newArticleResponseJson);
 });
