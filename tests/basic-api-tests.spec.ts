@@ -1,5 +1,22 @@
 import { test, expect, request } from "@playwright/test";
 
+let jwtToken: string;
+
+test.beforeAll("Run Before All", async ({ request }) => {
+  // Login and get JWT
+  const tokenResponse = await request.post(
+    "https://conduit-api.bondaracademy.com/api/users/login",
+    {
+      data: {
+        user: { email: "yehorTest@gmail.com", password: "yehortest" },
+      },
+    }
+  );
+
+  expect(tokenResponse.status()).toBe(200);
+  jwtToken = (await tokenResponse.json()).user.token;
+});
+
 // ---------------------------- GET ------------------------------------
 test("GET Tags", async ({ request }) => {
   const tagsResponse = await request.get(
@@ -26,20 +43,6 @@ test("GET All Articles", async ({ request }) => {
 
 // ---------------------------- POST ------------------------------------
 test("POST Create and DELETE an Article", async ({ request }) => {
-  // Login and get JWT
-  const tokenResponse = await request.post(
-    "https://conduit-api.bondaracademy.com/api/users/login",
-    {
-      data: {
-        user: { email: "yehorTest@gmail.com", password: "yehortest" },
-      },
-    }
-  );
-
-  expect(tokenResponse.status()).toBe(200);
-  const jwtToken = (await tokenResponse.json()).user.token;
-  console.log(`Obtained JWT Token: ${jwtToken}`);
-
   // Create unique article
   const uniqueTitle = `Yehor Test ${Date.now()}`;
 
@@ -110,20 +113,6 @@ test("POST Create and DELETE an Article", async ({ request }) => {
 
 // ---------------------------- PUT ------------------------------------
 test("CREATE, UPDATE and DELETE an Article", async ({ request }) => {
-  // Login and get JWT
-  const tokenResponse = await request.post(
-    "https://conduit-api.bondaracademy.com/api/users/login",
-    {
-      data: {
-        user: { email: "yehorTest@gmail.com", password: "yehortest" },
-      },
-    }
-  );
-
-  expect(tokenResponse.status()).toBe(200);
-  const jwtToken = (await tokenResponse.json()).user.token;
-  console.log(`Obtained JWT Token: ${jwtToken}`);
-
   // Create unique article
   const uniqueTitle = `Yehor Test ${Date.now()}`;
 
