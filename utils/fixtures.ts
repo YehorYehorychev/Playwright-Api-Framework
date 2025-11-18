@@ -1,13 +1,14 @@
-import { test as base, expect } from "@playwright/test";
+import { test as base, expect, APIRequestContext } from "@playwright/test";
 import { RequestHandler } from "../utils/request-handler";
 
-export type TestOpions = {
+export type TestOptions = {
   api: RequestHandler;
 };
 
-export const test = base.extend<TestOpions>({
-  api: async ({}, use) => {
-    const requestHandler = new RequestHandler();
+export const test = base.extend<TestOptions>({
+  api: async ({ request }, use) => {
+    const baseUrl = "https://conduit-api.bondaracademy.com/api";
+    const requestHandler = new RequestHandler(request, baseUrl);
     await use(requestHandler);
   },
 });
