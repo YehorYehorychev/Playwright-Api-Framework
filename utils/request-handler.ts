@@ -1,4 +1,4 @@
-export class requestHandler {
+export class RequestHandler {
   private baseUrl: string;
   private apiPath: string = "";
   private queryParams: object = {};
