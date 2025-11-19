@@ -1,4 +1,6 @@
-import { test, expect } from "../utils/fixtures";
+import { test } from "../utils/fixtures";
+import { expect } from "../utils/custom-expect";
+import { APILogger } from "../utils/logger";
 
 let authToken: string;
 
@@ -19,14 +21,14 @@ test("GET All Articles", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  expect(response.articles.length).toBeLessThanOrEqual(10);
-  expect(response.articlesCount).toBeGreaterThan(0);
+  expect(response.articles.length).shouldBeLessThanOrEqual(10);
+  expect(response.articlesCount).shouldEqual(response.articles.length);
 });
 
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
-  expect(response.tags[0]).toEqual("Test");
+  expect(response.tags[0]).shouldEqual("Test");
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
 
@@ -67,7 +69,7 @@ test("Create and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  expect(articlesResponseTwo.articles[0].title).not.toEqual(
+  expect(articlesResponseTwo.articles[0].title).not.shouldEqual(
     "Smoke Test Article"
   );
 });
@@ -132,7 +134,20 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  expect(articlesResponseTwo.articles[0].title).not.toEqual(
+  expect(articlesResponseTwo.articles[0].title).not.shouldEqual(
     "Smoke Test Article"
   );
+});
+
+test("Logger Recent Logs", async ({ api }) => {
+  const logger = new APILogger();
+  logger.logRequest(
+    "GET",
+    "https://test.com/api",
+    { Authorization: "Token" },
+    { foo: "bar" }
+  );
+  logger.logResponse(200, { foo: "bar" });
+  const recentLogs = logger.getRecentLogs();
+  console.log(recentLogs);
 });
