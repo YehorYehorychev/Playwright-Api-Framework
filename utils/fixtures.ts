@@ -1,5 +1,6 @@
 import { test as base, expect, APIRequestContext } from "@playwright/test";
 import { RequestHandler } from "../utils/request-handler";
+import { APILogger } from "../utils/logger";
 
 export type TestOptions = {
   api: RequestHandler;
@@ -8,7 +9,8 @@ export type TestOptions = {
 export const test = base.extend<TestOptions>({
   api: async ({ request }, use) => {
     const baseUrl = "https://conduit-api.bondaracademy.com/api";
-    const requestHandler = new RequestHandler(request, baseUrl);
+    const logger = new APILogger();
+    const requestHandler = new RequestHandler(request, baseUrl, logger);
     await use(requestHandler);
   },
 });
