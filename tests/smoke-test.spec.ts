@@ -1,4 +1,5 @@
 import { test, expect } from "../utils/fixtures";
+import { APILogger } from "../utils/logger";
 
 let authToken: string;
 
@@ -135,4 +136,17 @@ test("Create, Update and Delete Article", async ({ api }) => {
   expect(articlesResponseTwo.articles[0].title).not.toEqual(
     "Smoke Test Article"
   );
+});
+
+test("Logger Recent Logs", async ({ api }) => {
+  const logger = new APILogger();
+  logger.logRequest(
+    "GET",
+    "https://test.com/api",
+    { Authorization: "Token" },
+    { foo: "bar" }
+  );
+  logger.logResponse(200, { foo: "bar" });
+  const recentLogs = logger.getRecentLogs();
+  console.log(recentLogs);
 });

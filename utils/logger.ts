@@ -1,4 +1,4 @@
-export class APILogegr {
+export class APILogger {
   private recentLogs: any[] = [];
 
   logRequest(
@@ -33,7 +33,7 @@ export class APILogegr {
   getRecentLogs() {
     const logs = this.recentLogs
       .map((log) => {
-        return `========${log.type}========\n${JSON.stringify(log.data,null,4)}`;
+        return `======== ${log.type} ========\n${JSON.stringify(log.data,null,4)}`;
       }).join("\n\n");
     return logs;
   }
