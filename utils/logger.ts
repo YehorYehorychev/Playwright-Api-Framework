@@ -18,4 +18,23 @@ export class APILogegr {
     this.recentLogs.push({ type: "Request Details", data: logEntry });
     console.log("Request:", logEntry);
   }
+
+  logResponse(statusCode: number, body?: any) {
+    const logEntry = {
+      type: "response",
+      statusCode,
+      body,
+      timestamp: new Date().toISOString(),
+    };
+    this.recentLogs.push({ type: "Response Details", data: logEntry });
+    console.log("Response:", logEntry);
+  }
+
+  getRecentLogs() {
+    const logs = this.recentLogs
+      .map((log) => {
+        return `========${log.type}========\n${JSON.stringify(log.data,null,4)}`;
+      }).join("\n\n");
+    return logs;
+  }
 }
