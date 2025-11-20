@@ -1,17 +1,13 @@
 import { test } from "../utils/fixtures";
 import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
+import { createToken } from "../helpers/createToken";
 
 let authToken: string;
 
 test.beforeAll("Get Token", async ({ api, config }) => {
   // Login and get JWT
-  const tokenResponse = await api
-    .path("/users/login")
-    .body({ user: { email: config.userEmail, password: config.userPassword } })
-    .postRequest(200);
-
-  authToken = "Token " + tokenResponse.user.token;
+  authToken = await createToken(config.userEmail, config.userPassword);
 });
 
 // Example of a smoke test using RequestHandler
