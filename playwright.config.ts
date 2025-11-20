@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Read environment variables from file.
@@ -38,6 +38,10 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'smoke-tests',
+      testMatch: 'smoke*.spec.ts',
+    },
 
     // {
     //   name: 'firefox',
@@ -69,11 +73,4 @@ export default defineConfig({
     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });

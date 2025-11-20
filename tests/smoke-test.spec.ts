@@ -1,18 +1,15 @@
 import { test } from "../utils/fixtures";
 import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
+import { createToken } from "../helpers/createToken";
 
 let authToken: string;
 
-test.beforeAll("Get Token", async ({ api }) => {
-  // Login and get JWT
-  const tokenResponse = await api
-    .path("/users/login")
-    .body({ user: { email: "yehorTest@gmail.com", password: "yehortest" } })
-    .postRequest(200);
-
-  authToken = "Token " + tokenResponse.user.token;
-});
+// We don't need to get token here anymore since RequestHandler uses default token internally
+// test.beforeAll("Get Token", async ({ api, config }) => {
+//   // Login and get JWT
+//   authToken = await createToken(config.userEmail, config.userPassword);
+// });
 
 // Example of a smoke test using RequestHandler
 test("GET All Articles", async ({ api }) => {
@@ -35,7 +32,6 @@ test("GET Test Tags", async ({ api }) => {
 test("Create and Delete Article", async ({ api }) => {
   const createArticleResponse = await api
     .path("/articles")
-    .headers({ Authorization: authToken })
     .body({
       article: {
         title: "Smoke Test Article",
@@ -52,7 +48,6 @@ test("Create and Delete Article", async ({ api }) => {
 
   const articlesResponse = await api
     .path("/articles")
-    .headers({ Authorization: authToken })
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
@@ -60,12 +55,10 @@ test("Create and Delete Article", async ({ api }) => {
 
   await api
     .path(`/articles/${slug}`)
-    .headers({ Authorization: authToken })
     .deleteRequest(204);
 
   const articlesResponseTwo = await api
     .path("/articles")
-    .headers({ Authorization: authToken })
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
@@ -78,7 +71,6 @@ test("Create, Update and Delete Article", async ({ api }) => {
   // Create the article
   const createArticleResponse = await api
     .path("/articles")
-    .headers({ Authorization: authToken })
     .body({
       article: {
         title: "Smoke Test Article",
@@ -96,7 +88,6 @@ test("Create, Update and Delete Article", async ({ api }) => {
   // Update the article
   const updateArticleResponse = await api
     .path(`/articles/${slug}`)
-    .headers({ Authorization: authToken })
     .body({
       article: {
         title: "Updated Smoke Test Article",
@@ -116,7 +107,6 @@ test("Create, Update and Delete Article", async ({ api }) => {
 
   const articlesResponse = await api
     .path("/articles")
-    .headers({ Authorization: authToken })
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
@@ -125,12 +115,10 @@ test("Create, Update and Delete Article", async ({ api }) => {
   // Delete the article
   await api
     .path(`/articles/${newSlugId}`)
-    .headers({ Authorization: authToken })
     .deleteRequest(204);
 
   const articlesResponseTwo = await api
     .path("/articles")
-    .headers({ Authorization: authToken })
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
