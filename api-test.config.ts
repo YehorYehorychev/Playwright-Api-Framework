@@ -1,5 +1,5 @@
-const proccessEnv = process.env.TEST_ENV || "test";
-const env = proccessEnv || 'qa'
+const proccessEnv = process.env.TEST_ENV || "qa";
+const env = proccessEnv || "qa";
 console.log(`Running tests in ${env} environment`);
 
 const config = {
@@ -9,15 +9,15 @@ const config = {
 };
 
 if (env === "qa") {
-  config.apiUrl = "https://conduit-api.bondaracademy.com/api",
-  config.userEmail = "yehorTest@gmail.com",
-  config.userPassword = "yehortest"
+  (config.apiUrl = "https://conduit-api.bondaracademy.com/api"),
+    (config.userEmail = "yehorTest@gmail.com"),
+    (config.userPassword = "yehortest");
 }
 
 if (env === "prod") {
-  config.apiUrl = "https://conduit-api.bondaracademy.com/api",
-  config.userEmail = "",
-  config.userPassword = ""
+  (config.apiUrl = "https://conduit-api.bondaracademy.com/api"),
+    (config.userEmail = ""),
+    (config.userPassword = "");
 }
 
 export { config };

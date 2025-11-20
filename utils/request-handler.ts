@@ -3,7 +3,7 @@ import { APILogger } from "./logger";
 
 export class RequestHandler {
   private request: APIRequestContext;
-  private baseUrl: string;
+  private baseUrl: string | undefined;
   private logger: APILogger;
   private defaultBaseUrl: string;
   private apiPath: string = "";
@@ -54,6 +54,7 @@ export class RequestHandler {
       headers: this.apiheaders,
     });
 
+    this.cleanUpFields();
     const actualStatus = response.status();
     const responseJson = await response.json();
 
@@ -75,6 +76,7 @@ export class RequestHandler {
       data: this.requestBody,
     });
 
+    this.cleanUpFields();
     const actualStatus = response.status();
     const responseJson = await response.json();
 
@@ -96,6 +98,7 @@ export class RequestHandler {
       data: this.requestBody,
     });
 
+    this.cleanUpFields();
     const actualStatus = response.status();
     const responseJson = await response.json();
 
@@ -113,6 +116,7 @@ export class RequestHandler {
       headers: this.apiheaders,
     });
 
+    this.cleanUpFields();
     const actualStatus = response.status();
     this.logger.logResponse(actualStatus);
 
@@ -139,5 +143,13 @@ export class RequestHandler {
       );
       throw error;
     }
+  }
+
+  private cleanUpFields() {
+    this.apiPath = "";
+    this.baseUrl = undefined;
+    this.queryParams = {};
+    this.apiheaders = {};
+    this.requestBody = {};
   }
 }
