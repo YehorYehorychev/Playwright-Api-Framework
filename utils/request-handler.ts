@@ -1,24 +1,28 @@
-import { APIRequestContext, expect } from "@playwright/test";
+import { APIRequestContext, test } from "@playwright/test";
 import { APILogger } from "./logger";
 
 export class RequestHandler {
   private request: APIRequestContext;
-  private baseUrl: string | undefined;
-  private logger: APILogger;
+  private baseUrl?: string;
   private defaultBaseUrl: string;
+  private logger: APILogger;
   private apiPath: string = "";
-  private queryParams: object = {};
+  private queryParams: Record<string, any> = {};
   private apiheaders: Record<string, string> = {};
   private requestBody: object = {};
+  private defaultAuthToken: string;
+  private clearAuthFlag: boolean = false;
 
   constructor(
     request: APIRequestContext,
-    apiBaseUrl?: string,
-    logger: APILogger
+    apiBaseUrl: string,
+    logger: APILogger,
+    authToken: string = ""
   ) {
     this.request = request;
     this.defaultBaseUrl = apiBaseUrl;
     this.logger = logger;
+    this.defaultAuthToken = authToken;
   }
 
   url(url: string) {
@@ -46,82 +50,86 @@ export class RequestHandler {
     return this;
   }
 
-  // ========= GET ==========
+  clearAuth() {
+    this.clearAuthFlag = true;
+    return this;
+  }
+
+  // ========== GET ==========
   async getRequest(statusCode: number) {
     const url = this.getUrl();
-    this.logger.logRequest("GET", url, this.apiheaders);
-    const response = await this.request.get(url, {
-      headers: this.apiheaders,
+    const headers = this.getHeaders();
+
+    let response: any;
+
+    await test.step(`GET ${url}`, async () => {
+      this.logger.logRequest("GET", url, headers);
+      response = await this.request.get(url, { headers });
     });
 
-    this.cleanUpFields();
-    const actualStatus = response.status();
-    const responseJson = await response.json();
-
-    this.logger.logResponse(actualStatus, responseJson);
-    this.statusCodeValidator(actualStatus, statusCode);
-
-    return responseJson;
+    return this.handleResponse(response, statusCode);
   }
 
-  // ========= POST ==========
+  // ========== POST ==========
   async postRequest(statusCode: number) {
     const url = this.getUrl();
-    this.logger.logRequest("POST", url, this.apiheaders, this.requestBody);
-    const response = await this.request.post(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...this.apiheaders,
-      },
-      data: this.requestBody,
+    const headers = {
+      "Content-Type": "application/json",
+      ...this.getHeaders(),
+    };
+
+    let response: any;
+
+    await test.step(`POST ${url}`, async () => {
+      this.logger.logRequest("POST", url, headers, this.requestBody);
+
+      response = await this.request.post(url, {
+        headers,
+        data: this.requestBody,
+      });
     });
 
-    this.cleanUpFields();
-    const actualStatus = response.status();
-    const responseJson = await response.json();
-
-    this.logger.logResponse(actualStatus, responseJson);
-
-    this.statusCodeValidator(actualStatus, statusCode);
-    return responseJson;
+    return this.handleResponse(response, statusCode);
   }
 
-  // ========= PUT ==========
+  // ========== PUT ==========
   async putRequest(statusCode: number) {
     const url = this.getUrl();
-    this.logger.logRequest("PUT", url, this.apiheaders, this.requestBody);
-    const response = await this.request.put(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...this.apiheaders,
-      },
-      data: this.requestBody,
+    const headers = {
+      "Content-Type": "application/json",
+      ...this.getHeaders(),
+    };
+
+    let response: any;
+
+    await test.step(`PUT ${url}`, async () => {
+      this.logger.logRequest("PUT", url, headers, this.requestBody);
+
+      response = await this.request.put(url, {
+        headers,
+        data: this.requestBody,
+      });
     });
 
-    this.cleanUpFields();
-    const actualStatus = response.status();
-    const responseJson = await response.json();
-
-    this.logger.logResponse(actualStatus, responseJson);
-
-    this.statusCodeValidator(actualStatus, statusCode);
-    return responseJson;
+    return this.handleResponse(response, statusCode);
   }
 
-  // ========= DELETE ==========
+  // ========== DELETE ==========
   async deleteRequest(statusCode: number) {
     const url = this.getUrl();
-    this.logger.logRequest("DELETE", url, this.apiheaders);
-    const response = await this.request.delete(url, {
-      headers: this.apiheaders,
+    const headers = this.getHeaders();
+
+    let response: any;
+
+    await test.step(`DELETE ${url}`, async () => {
+      this.logger.logRequest("DELETE", url, headers);
+      response = await this.request.delete(url, { headers });
     });
 
-    this.cleanUpFields();
-    const actualStatus = response.status();
-    this.logger.logResponse(actualStatus);
-
-    this.statusCodeValidator(actualStatus, statusCode);
+    await this.handleResponse(response, statusCode);
   }
+
+  // ========== HELPERS ==========
 
   private getUrl() {
     const url = new URL(
@@ -135,14 +143,32 @@ export class RequestHandler {
     return url.toString();
   }
 
-  private statusCodeValidator(actualStatus: number, expectedStatus: number) {
-    if (actualStatus !== expectedStatus) {
-      const logs = this.logger.getRecentLogs();
-      const error = new Error(
-        `Expected status code ${expectedStatus} but received ${actualStatus}.\n\nRecent Logs:\n${logs}`
-      );
-      throw error;
+  private getHeaders(): Record<string, string> {
+    const headers = { ...this.apiheaders };
+
+    if (!this.clearAuthFlag && this.defaultAuthToken) {
+      headers["Authorization"] =
+        headers["Authorization"] ?? this.defaultAuthToken;
     }
+
+    return headers;
+  }
+
+  private async handleResponse(response: any, expectedStatus: number) {
+    const actual = response.status();
+    const json = await response.json().catch(() => null);
+
+    this.logger.logResponse(actual, json);
+
+    if (actual !== expectedStatus) {
+      const logs = this.logger.getRecentLogs();
+      throw new Error(
+        `Expected status ${expectedStatus}, got ${actual}\n\nLogs:\n${logs}`
+      );
+    }
+
+    this.cleanUpFields();
+    return json;
   }
 
   private cleanUpFields() {
@@ -151,5 +177,6 @@ export class RequestHandler {
     this.queryParams = {};
     this.apiheaders = {};
     this.requestBody = {};
+    this.clearAuthFlag = false;
   }
 }
