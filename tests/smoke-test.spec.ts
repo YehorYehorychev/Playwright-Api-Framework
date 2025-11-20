@@ -4,11 +4,11 @@ import { APILogger } from "../utils/logger";
 
 let authToken: string;
 
-test.beforeAll("Get Token", async ({ api }) => {
+test.beforeAll("Get Token", async ({ api, config }) => {
   // Login and get JWT
   const tokenResponse = await api
     .path("/users/login")
-    .body({ user: { email: "yehorTest@gmail.com", password: "yehortest" } })
+    .body({ user: { email: config.userEmail, password: config.userPassword } })
     .postRequest(200);
 
   authToken = "Token " + tokenResponse.user.token;
