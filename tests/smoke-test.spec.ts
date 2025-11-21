@@ -26,7 +26,7 @@ test("GET All Articles", async ({ api }) => {
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
-  await validateSchema('tags', 'GET_tags')
+  expect(response).shouldMatchSchema("tags", "GET_tags");
   expect(response.tags[0]).shouldEqual("Test");
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
@@ -55,9 +55,7 @@ test("Create and Delete Article", async ({ api }) => {
 
   expect(articlesResponse.articles[0].title).toBe("Smoke Test Article");
 
-  await api
-    .path(`/articles/${slug}`)
-    .deleteRequest(204);
+  await api.path(`/articles/${slug}`).deleteRequest(204);
 
   const articlesResponseTwo = await api
     .path("/articles")
@@ -115,9 +113,7 @@ test("Create, Update and Delete Article", async ({ api }) => {
   expect(articlesResponse.articles[0].title).toBe("Updated Smoke Test Article");
 
   // Delete the article
-  await api
-    .path(`/articles/${newSlugId}`)
-    .deleteRequest(204);
+  await api.path(`/articles/${newSlugId}`).deleteRequest(204);
 
   const articlesResponseTwo = await api
     .path("/articles")
