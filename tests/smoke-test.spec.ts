@@ -26,7 +26,7 @@ test("GET All Articles", async ({ api }) => {
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
-  await validateSchema('tags', 'GET_tags')
+  await validateSchema('tags', 'GET_tags', response)
   expect(response.tags[0]).shouldEqual("Test");
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
