@@ -2,6 +2,7 @@ import { test } from "../utils/fixtures";
 import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
 import { createToken } from "../helpers/createToken";
+import { validateSchema } from "../utils/schema-validator";
 
 let authToken: string;
 
@@ -25,6 +26,7 @@ test("GET All Articles", async ({ api }) => {
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
+  await validateSchema('tags', 'GET_tags')
   expect(response.tags[0]).shouldEqual("Test");
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
