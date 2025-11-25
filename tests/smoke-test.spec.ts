@@ -3,9 +3,6 @@ import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
 import { generateRandomArticleRequest } from "../utils/data-generator";
 
-//
-//  1) GET ALL ARTICLES
-//
 test("GET All Articles", async ({ api }) => {
   const response = await api
     .path("/articles")
@@ -17,9 +14,6 @@ test("GET All Articles", async ({ api }) => {
   expect(response.articlesCount).shouldEqual(response.articles.length);
 });
 
-//
-//  2) GET TAGS
-//
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
@@ -27,9 +21,6 @@ test("GET Test Tags", async ({ api }) => {
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
 
-//
-//  3) CREATE + DELETE ARTICLE
-//
 test("Create and Delete Article", async ({ api }) => {
   // Generate full random article payload
   const articleRequest = generateRandomArticleRequest();
@@ -73,9 +64,6 @@ test("Create and Delete Article", async ({ api }) => {
   expect(stillExists).shouldEqual(false);
 });
 
-//
-//  4) CREATE + UPDATE + DELETE ARTICLE
-//
 test("Create, Update and Delete Article", async ({ api }) => {
   // CREATE
   const createPayload = generateRandomArticleRequest();
@@ -128,9 +116,6 @@ test("Create, Update and Delete Article", async ({ api }) => {
   expect(stillExists).shouldEqual(false);
 });
 
-//
-//  5) LOGGER DEMO
-//
 test("Logger Recent Logs", async () => {
   const logger = new APILogger();
   logger.logRequest(
