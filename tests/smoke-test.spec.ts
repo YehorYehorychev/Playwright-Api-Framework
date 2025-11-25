@@ -1,8 +1,7 @@
 import { test } from "../utils/fixtures";
 import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
-import articleRequestPayload from "../request-objects/POST-article.json";
-import { faker } from "@faker-js/faker";
+import { generateRandomArticleRequest } from "../utils/data-generator";
 
 //
 //  1) GET ALL ARTICLES
@@ -32,12 +31,11 @@ test("GET Test Tags", async ({ api }) => {
 //  3) CREATE + DELETE ARTICLE
 //
 test("Create and Delete Article", async ({ api }) => {
-  const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
+  // Generate full random article payload
+  const articleRequest = generateRandomArticleRequest();
+  const title = articleRequest.article.title;
 
-  const title = faker.lorem.words(4);
-  articleRequest.article.title = title;
-
-  // Create
+  // CREATE
   const createArticleResponse = await api
     .path("/articles")
     .body(articleRequest)
@@ -47,7 +45,7 @@ test("Create and Delete Article", async ({ api }) => {
 
   const createdSlug = createArticleResponse.article.slug;
 
-  // Verify exists
+  // VERIFY EXISTS
   const listBeforeDelete = await api
     .path("/articles")
     .params({ limit: 10, offset: 0 })
@@ -62,7 +60,7 @@ test("Create and Delete Article", async ({ api }) => {
   // DELETE
   await api.path(`/articles/${createdSlug}`).deleteRequest(204);
 
-  // Verify removed
+  // VERIFY REMOVED
   const listAfterDelete = await api
     .path("/articles")
     .params({ limit: 10, offset: 0 })
@@ -76,18 +74,16 @@ test("Create and Delete Article", async ({ api }) => {
 });
 
 //
-//  4) CREATE + UPDATE + DELETE
+//  4) CREATE + UPDATE + DELETE ARTICLE
 //
 test("Create, Update and Delete Article", async ({ api }) => {
-  const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
-
   // CREATE
-  const titleCreate = faker.lorem.words(5);
-  articleRequest.article.title = titleCreate;
+  const createPayload = generateRandomArticleRequest();
+  const titleCreate = createPayload.article.title;
 
   const createArticleResponse = await api
     .path("/articles")
-    .body(articleRequest)
+    .body(createPayload)
     .postRequest(201);
 
   expect(createArticleResponse.article.title).shouldEqual(titleCreate);
@@ -95,19 +91,19 @@ test("Create, Update and Delete Article", async ({ api }) => {
   const slugOriginal = createArticleResponse.article.slug;
 
   // UPDATE
-  const titleUpdated = faker.lorem.words(5);
-  articleRequest.article.title = titleUpdated;
+  const updatePayload = generateRandomArticleRequest();
+  const titleUpdated = updatePayload.article.title;
 
   const updateArticleResponse = await api
     .path(`/articles/${slugOriginal}`)
-    .body(articleRequest)
+    .body(updatePayload)
     .putRequest(200);
 
   expect(updateArticleResponse.article.title).shouldEqual(titleUpdated);
 
   const newSlug = updateArticleResponse.article.slug;
 
-  // VERIFY UPDATED
+  // VERIFY UPDATE
   const listAfterUpdate = await api
     .path("/articles")
     .params({ limit: 10, offset: 0 })
@@ -133,7 +129,7 @@ test("Create, Update and Delete Article", async ({ api }) => {
 });
 
 //
-// 5) LOGGER DEMO
+//  5) LOGGER DEMO
 //
 test("Logger Recent Logs", async () => {
   const logger = new APILogger();
