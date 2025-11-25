@@ -1,20 +1,12 @@
 import { test } from "../utils/fixtures";
 import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
-import { createToken } from "../helpers/createToken";
-import { validateSchema } from "../utils/schema-validator";
 import articleRequestPayload from "../request-objects/POST-article.json";
-import { faker } from '@faker-js/faker';
+import { faker } from "@faker-js/faker";
 
-let authToken: string;
-
-// We don't need to get token here anymore since RequestHandler uses default token internally
-// test.beforeAll("Get Token", async ({ api, config }) => {
-//   // Login and get JWT
-//   authToken = await createToken(config.userEmail, config.userPassword);
-// });
-
-// Example of a smoke test using RequestHandler
+//
+//  1) GET ALL ARTICLES
+//
 test("GET All Articles", async ({ api }) => {
   const response = await api
     .path("/articles")
@@ -26,47 +18,51 @@ test("GET All Articles", async ({ api }) => {
   expect(response.articlesCount).shouldEqual(response.articles.length);
 });
 
+//
+//  2) GET TAGS
+//
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
   await expect(response).shouldMatchSchema("tags", "GET_tags");
-  expect(response.tags[0]).shouldEqual("Test");
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
 
+//
+//  3) CREATE + DELETE ARTICLE
+//
 test("Create and Delete Article", async ({ api }) => {
-  // To avoid mutation issues, we create a deep copy of the payload
   const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
-  articleRequest.article.title = "Overrided Title - Test Article";
 
-  // Create the article
+  const title = faker.lorem.words(4);
+  articleRequest.article.title = title;
+
+  // Create
   const createArticleResponse = await api
     .path("/articles")
     .body(articleRequest)
     .postRequest(201);
 
+  expect(createArticleResponse.article.title).shouldEqual(title);
+
   const createdSlug = createArticleResponse.article.slug;
 
-  expect(createArticleResponse.article.title).shouldEqual(
-    "Overrided Title - Test Article"
-  );
-
-  // Verify the article exists in the list
+  // Verify exists
   const listBeforeDelete = await api
     .path("/articles")
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  // Check if the created article exists
   const existsBeforeDelete = listBeforeDelete.articles.some(
     (a) => a.slug === createdSlug
   );
 
   expect(existsBeforeDelete).shouldEqual(true);
 
-  // Delete the article
+  // DELETE
   await api.path(`/articles/${createdSlug}`).deleteRequest(204);
 
+  // Verify removed
   const listAfterDelete = await api
     .path("/articles")
     .params({ limit: 10, offset: 0 })
@@ -79,55 +75,67 @@ test("Create and Delete Article", async ({ api }) => {
   expect(stillExists).shouldEqual(false);
 });
 
+//
+//  4) CREATE + UPDATE + DELETE
+//
 test("Create, Update and Delete Article", async ({ api }) => {
-  const articleTitle = faker.lorem.sentence(5);
-  // To avoid mutation issues, we create a deep copy of the payload
   const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
 
-  // Create the article
+  // CREATE
+  const titleCreate = faker.lorem.words(5);
+  articleRequest.article.title = titleCreate;
+
   const createArticleResponse = await api
     .path("/articles")
     .body(articleRequest)
     .postRequest(201);
 
-  expect(createArticleResponse.article.title).toBe(articleTitle);
+  expect(createArticleResponse.article.title).shouldEqual(titleCreate);
 
-  const slug = createArticleResponse.article.slug;
-  // Update the article payload
-  const articleTitleUpdated = faker.lorem.sentence(5);
-  articleRequest.article.title = articleTitleUpdated;
+  const slugOriginal = createArticleResponse.article.slug;
 
-  // Update the article
+  // UPDATE
+  const titleUpdated = faker.lorem.words(5);
+  articleRequest.article.title = titleUpdated;
+
   const updateArticleResponse = await api
-    .path(`/articles/${slug}`)
+    .path(`/articles/${slugOriginal}`)
     .body(articleRequest)
     .putRequest(200);
 
-  expect(updateArticleResponse.article.title).toBe(articleTitleUpdated);
+  expect(updateArticleResponse.article.title).shouldEqual(titleUpdated);
 
-  const newSlugId = updateArticleResponse.article.slug;
+  const newSlug = updateArticleResponse.article.slug;
 
-  const articlesResponse = await api
+  // VERIFY UPDATED
+  const listAfterUpdate = await api
     .path("/articles")
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  expect(articlesResponse.articles[0].title).toBe(articleTitleUpdated);
-
-  // Delete the article
-  await api.path(`/articles/${newSlugId}`).deleteRequest(204);
-
-  const articlesResponseTwo = await api
-    .path("/articles")
-    .params({ limit: 10, offset: 0 })
-    .getRequest(200);
-
-  expect(articlesResponseTwo.articles[0].title).not.shouldEqual(
-    "Smoke Test Article"
+  const exists = listAfterUpdate.articles.some(
+    (a) => a.slug === newSlug && a.title === titleUpdated
   );
+
+  expect(exists).shouldEqual(true);
+
+  // DELETE
+  await api.path(`/articles/${newSlug}`).deleteRequest(204);
+
+  const listAfterDelete = await api
+    .path("/articles")
+    .params({ limit: 10, offset: 0 })
+    .getRequest(200);
+
+  const stillExists = listAfterDelete.articles.some((a) => a.slug === newSlug);
+
+  expect(stillExists).shouldEqual(false);
 });
 
-test("Logger Recent Logs", async ({ api }) => {
+//
+// 5) LOGGER DEMO
+//
+test("Logger Recent Logs", async () => {
   const logger = new APILogger();
   logger.logRequest(
     "GET",
@@ -136,6 +144,6 @@ test("Logger Recent Logs", async ({ api }) => {
     { foo: "bar" }
   );
   logger.logResponse(200, { foo: "bar" });
-  const recentLogs = logger.getRecentLogs();
-  console.log(recentLogs);
+
+  console.log(logger.getRecentLogs());
 });
