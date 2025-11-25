@@ -3,6 +3,7 @@ import { expect } from "../utils/custom-expect";
 import { APILogger } from "../utils/logger";
 import { createToken } from "../helpers/createToken";
 import { validateSchema } from "../utils/schema-validator";
+import articleRequestPayload from "../request-objects/POST-article.json";
 
 let authToken: string;
 
@@ -33,71 +34,70 @@ test("GET Test Tags", async ({ api }) => {
 });
 
 test("Create and Delete Article", async ({ api }) => {
-  const createArticleResponse = await api
-    .path("/articles")
-    .body({
-      article: {
-        title: "Smoke Test Article",
-        description: "This is a test article created during smoke testing.",
-        body: "Smoke testing is essential to ensure basic functionality.",
-        tagList: ["smoke", "test"],
-      },
-    })
-    .postRequest(201);
+  // To avoid mutation issues, we create a deep copy of the payload
+  const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
+  articleRequest.article.title = "Overrided Title - Test Article";
 
-  expect(createArticleResponse.article.title).toBe("Smoke Test Article");
-
-  const slug = createArticleResponse.article.slug;
-
-  const articlesResponse = await api
-    .path("/articles")
-    .params({ limit: 10, offset: 0 })
-    .getRequest(200);
-
-  expect(articlesResponse.articles[0].title).toBe("Smoke Test Article");
-
-  await api.path(`/articles/${slug}`).deleteRequest(204);
-
-  const articlesResponseTwo = await api
-    .path("/articles")
-    .params({ limit: 10, offset: 0 })
-    .getRequest(200);
-
-  expect(articlesResponseTwo.articles[0].title).not.shouldEqual(
-    "Smoke Test Article"
-  );
-});
-
-test("Create, Update and Delete Article", async ({ api }) => {
   // Create the article
   const createArticleResponse = await api
     .path("/articles")
-    .body({
-      article: {
-        title: "Smoke Test Article",
-        description: "This is a test article created during smoke testing.",
-        body: "Smoke testing is essential to ensure basic functionality.",
-        tagList: ["smoke", "test"],
-      },
-    })
+    .body(articleRequest)
+    .postRequest(201);
+
+  const createdSlug = createArticleResponse.article.slug;
+
+  expect(createArticleResponse.article.title).shouldEqual(
+    "Overrided Title - Test Article"
+  );
+
+  // Verify the article exists in the list
+  const listBeforeDelete = await api
+    .path("/articles")
+    .params({ limit: 10, offset: 0 })
+    .getRequest(200);
+
+  // Check if the created article exists
+  const existsBeforeDelete = listBeforeDelete.articles.some(
+    (a) => a.slug === createdSlug
+  );
+
+  expect(existsBeforeDelete).shouldEqual(true);
+
+  // Delete the article
+  await api.path(`/articles/${createdSlug}`).deleteRequest(204);
+
+  const listAfterDelete = await api
+    .path("/articles")
+    .params({ limit: 10, offset: 0 })
+    .getRequest(200);
+
+  const stillExists = listAfterDelete.articles.some(
+    (a) => a.slug === createdSlug
+  );
+
+  expect(stillExists).shouldEqual(false);
+});
+
+test("Create, Update and Delete Article", async ({ api }) => {
+  // To avoid mutation issues, we create a deep copy of the payload
+  const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
+
+  // Create the article
+  const createArticleResponse = await api
+    .path("/articles")
+    .body(articleRequest)
     .postRequest(201);
 
   expect(createArticleResponse.article.title).toBe("Smoke Test Article");
 
   const slug = createArticleResponse.article.slug;
+  // Update the article payload
+  articleRequest.article.title = "Updated Smoke Test Article";
 
   // Update the article
   const updateArticleResponse = await api
     .path(`/articles/${slug}`)
-    .body({
-      article: {
-        title: "Updated Smoke Test Article",
-        description:
-          "This is an updated test article created during smoke testing.",
-        body: "Smoke testing is essential to ensure basic functionality. This article has been updated.",
-        tagList: ["smoke", "test", "updated"],
-      },
-    })
+    .body(articleRequest)
     .putRequest(200);
 
   expect(updateArticleResponse.article.title).toBe(
