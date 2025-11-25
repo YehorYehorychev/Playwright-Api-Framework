@@ -4,6 +4,7 @@ import { APILogger } from "../utils/logger";
 import { createToken } from "../helpers/createToken";
 import { validateSchema } from "../utils/schema-validator";
 import articleRequestPayload from "../request-objects/POST-article.json";
+import { faker } from '@faker-js/faker';
 
 let authToken: string;
 
@@ -79,6 +80,7 @@ test("Create and Delete Article", async ({ api }) => {
 });
 
 test("Create, Update and Delete Article", async ({ api }) => {
+  const articleTitle = faker.lorem.sentence(5);
   // To avoid mutation issues, we create a deep copy of the payload
   const articleRequest = JSON.parse(JSON.stringify(articleRequestPayload));
 
@@ -88,11 +90,12 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .body(articleRequest)
     .postRequest(201);
 
-  expect(createArticleResponse.article.title).toBe("Smoke Test Article");
+  expect(createArticleResponse.article.title).toBe(articleTitle);
 
   const slug = createArticleResponse.article.slug;
   // Update the article payload
-  articleRequest.article.title = "Updated Smoke Test Article";
+  const articleTitleUpdated = faker.lorem.sentence(5);
+  articleRequest.article.title = articleTitleUpdated;
 
   // Update the article
   const updateArticleResponse = await api
@@ -100,9 +103,7 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .body(articleRequest)
     .putRequest(200);
 
-  expect(updateArticleResponse.article.title).toBe(
-    "Updated Smoke Test Article"
-  );
+  expect(updateArticleResponse.article.title).toBe(articleTitleUpdated);
 
   const newSlugId = updateArticleResponse.article.slug;
 
@@ -111,7 +112,7 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  expect(articlesResponse.articles[0].title).toBe("Updated Smoke Test Article");
+  expect(articlesResponse.articles[0].title).toBe(articleTitleUpdated);
 
   // Delete the article
   await api.path(`/articles/${newSlugId}`).deleteRequest(204);
