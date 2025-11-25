@@ -19,6 +19,7 @@ test("GET All Articles", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(response).shouldMatchSchema("articles", "GET_articles");
   expect(response.articles.length).shouldBeLessThanOrEqual(10);
   expect(response.articlesCount).shouldEqual(response.articles.length);
 });
@@ -26,7 +27,7 @@ test("GET All Articles", async ({ api }) => {
 test("GET Test Tags", async ({ api }) => {
   const response = await api.path("/tags").getRequest(200);
 
-  await expect(response).shouldMatchSchema("tags", "GET_tags", true);
+  await expect(response).shouldMatchSchema("tags", "GET_tags");
   expect(response.tags[0]).shouldEqual("Test");
   expect(response.tags.length).toBeLessThanOrEqual(10);
 });
