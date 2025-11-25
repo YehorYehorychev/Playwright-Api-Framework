@@ -1,0 +1,8 @@
+{
+  "article": {
+    "title": "Smoke Test Article",
+    "description": "This is a test article created during smoke testing.",
+    "body": "Smoke testing is essential to ensure basic functionality.",
+    "tagList": ["smoke", "test"]
+  }
+}
