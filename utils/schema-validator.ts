@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import Ajv from "ajv";
+import { createSchema } from "genson-js";
 
 const SCHEMA_BASE_PATH = "./response-schemas";
 const ajv = new Ajv({ allErrors: true });
@@ -8,13 +9,27 @@ const ajv = new Ajv({ allErrors: true });
 export async function validateSchema(
   dirName: string,
   fileName: string,
-  resposeBody: object
+  resposeBody: object,
+  createSchemaFlag: boolean = false
 ) {
   const schemaPath = path.join(
     SCHEMA_BASE_PATH,
     dirName,
     `${fileName}_schema.json`
   );
+
+  if (createSchemaFlag) {
+    try {
+      const generatedSchema = createSchema(resposeBody);
+      await fs.mkdir(path.dirname(schemaPath), { recursive: true });
+      await fs.writeFile(schemaPath, JSON.stringify(generatedSchema, null, 2));
+    } catch (error: any) {
+      throw new Error(
+        `Failed to create schema at ${schemaPath}: ${error.message}`
+      );
+    }
+  }
+
   const schema = await loadSchema(schemaPath);
   const validate = ajv.compile(schema);
 
