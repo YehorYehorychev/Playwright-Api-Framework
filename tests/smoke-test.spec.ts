@@ -12,6 +12,14 @@ test("GET All Articles", async ({ api }) => {
   await expect(response).shouldMatchSchema("articles", "GET_articles");
   expect(response.articles.length).shouldBeLessThanOrEqual(10);
   expect(response.articlesCount).shouldEqual(response.articles.length);
+  expect(response.articles.length).toBeGreaterThan(0);
+
+  // Verify slug matches the title format
+  response.articles.forEach((article: any) => {
+    const titleToSlug = article.title.replace(/[,]/g, "").replace(/\s+/g, "-");
+    const slugWithoutNumber = article.slug.replace(/-\d+$/, "");
+    expect(slugWithoutNumber).toBe(titleToSlug);
+  });
 });
 
 test("GET Test Tags", async ({ api }) => {
@@ -19,6 +27,7 @@ test("GET Test Tags", async ({ api }) => {
 
   await expect(response).shouldMatchSchema("tags", "GET_tags");
   expect(response.tags.length).toBeLessThanOrEqual(10);
+  expect(response.tags.length).toBeGreaterThan(0);
 });
 
 test("Create and Delete Article", async ({ api }) => {
@@ -32,9 +41,18 @@ test("Create and Delete Article", async ({ api }) => {
     .body(articleRequest)
     .postRequest(201);
 
+  await expect(createArticleResponse).shouldMatchSchema(
+    "articles",
+    "POST_articles"
+  );
   expect(createArticleResponse.article.title).shouldEqual(title);
 
   const createdSlug = createArticleResponse.article.slug;
+
+  // Verify slug matches the title format
+  const titleToSlug = title.replace(/[,]/g, "").replace(/\s+/g, "-");
+  const slugWithoutNumber = createdSlug.replace(/-\d+$/, "");
+  expect(slugWithoutNumber).toBe(titleToSlug);
 
   // VERIFY EXISTS
   const listBeforeDelete = await api
@@ -42,8 +60,9 @@ test("Create and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listBeforeDelete).shouldMatchSchema("articles", "GET_articles");
   const existsBeforeDelete = listBeforeDelete.articles.some(
-    (a) => a.slug === createdSlug
+    (a: any) => a.slug === createdSlug
   );
 
   expect(existsBeforeDelete).shouldEqual(true);
@@ -57,8 +76,9 @@ test("Create and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listAfterDelete).shouldMatchSchema("articles", "GET_articles");
   const stillExists = listAfterDelete.articles.some(
-    (a) => a.slug === createdSlug
+    (a: any) => a.slug === createdSlug
   );
 
   expect(stillExists).shouldEqual(false);
@@ -74,6 +94,10 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .body(createPayload)
     .postRequest(201);
 
+  await expect(createArticleResponse).shouldMatchSchema(
+    "articles",
+    "POST_articles"
+  );
   expect(createArticleResponse.article.title).shouldEqual(titleCreate);
 
   const slugOriginal = createArticleResponse.article.slug;
@@ -87,9 +111,20 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .body(updatePayload)
     .putRequest(200);
 
+  await expect(updateArticleResponse).shouldMatchSchema(
+    "articles",
+    "PUT_articles"
+  );
   expect(updateArticleResponse.article.title).shouldEqual(titleUpdated);
 
   const newSlug = updateArticleResponse.article.slug;
+
+  // Verify slug matches the title format
+  const updatedTitleToSlug = titleUpdated
+    .replace(/[,]/g, "")
+    .replace(/\s+/g, "-");
+  const slugWithoutNumber = newSlug.replace(/-\d+$/, "");
+  expect(slugWithoutNumber).toBe(updatedTitleToSlug);
 
   // VERIFY UPDATE
   const listAfterUpdate = await api
@@ -97,8 +132,9 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listAfterUpdate).shouldMatchSchema("articles", "GET_articles");
   const exists = listAfterUpdate.articles.some(
-    (a) => a.slug === newSlug && a.title === titleUpdated
+    (a: any) => a.slug === newSlug && a.title === titleUpdated
   );
 
   expect(exists).shouldEqual(true);
@@ -111,7 +147,10 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
-  const stillExists = listAfterDelete.articles.some((a) => a.slug === newSlug);
+  await expect(listAfterDelete).shouldMatchSchema("articles", "GET_articles");
+  const stillExists = listAfterDelete.articles.some(
+    (a: any) => a.slug === newSlug
+  );
 
   expect(stillExists).shouldEqual(false);
 });
