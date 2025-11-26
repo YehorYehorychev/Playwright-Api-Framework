@@ -45,7 +45,11 @@ async function loadSchema(schemaPath: string) {
 
 async function generateNewSchema(responseBody: object, schemaPath: string) {
   try {
-    const generatedSchema = createSchema(responseBody);
+    let generatedSchema = createSchema(responseBody);
+
+    // Add date-time format to createdAt and updatedAt properties
+    generatedSchema = addDateTimeFormat(generatedSchema);
+
     await fs.mkdir(path.dirname(schemaPath), { recursive: true });
     await fs.writeFile(schemaPath, JSON.stringify(generatedSchema, null, 2));
   } catch (error: any) {
@@ -53,4 +57,40 @@ async function generateNewSchema(responseBody: object, schemaPath: string) {
       `Failed to create schema at ${schemaPath}: ${error.message}`
     );
   }
+}
+
+function addDateTimeFormat(schema: any): any {
+  if (schema.properties) {
+    if (
+      schema.properties.createdAt &&
+      schema.properties.createdAt.type === "string"
+    ) {
+      schema.properties.createdAt.format = "date-time";
+    }
+    if (
+      schema.properties.updatedAt &&
+      schema.properties.updatedAt.type === "string"
+    ) {
+      schema.properties.updatedAt.format = "date-time";
+    }
+
+    // Recursively check nested objects and array items
+    for (const key in schema.properties) {
+      const prop = schema.properties[key];
+
+      // Handle nested objects
+      if (prop.type === "object" && prop.properties) {
+        addDateTimeFormat(prop);
+      }
+
+      // Handle array items
+      if (prop.type === "array" && prop.items) {
+        if (prop.items.type === "object" && prop.items.properties) {
+          addDateTimeFormat(prop.items);
+        }
+      }
+    }
+  }
+
+  return schema;
 }
