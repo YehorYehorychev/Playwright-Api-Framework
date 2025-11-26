@@ -32,6 +32,10 @@ test("Create and Delete Article", async ({ api }) => {
     .body(articleRequest)
     .postRequest(201);
 
+  await expect(createArticleResponse).shouldMatchSchema(
+    "articles",
+    "POST_articles"
+  );
   expect(createArticleResponse.article.title).shouldEqual(title);
 
   const createdSlug = createArticleResponse.article.slug;
@@ -42,6 +46,7 @@ test("Create and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listBeforeDelete).shouldMatchSchema("articles", "GET_articles");
   const existsBeforeDelete = listBeforeDelete.articles.some(
     (a) => a.slug === createdSlug
   );
@@ -57,6 +62,7 @@ test("Create and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listAfterDelete).shouldMatchSchema("articles", "GET_articles");
   const stillExists = listAfterDelete.articles.some(
     (a) => a.slug === createdSlug
   );
@@ -74,6 +80,10 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .body(createPayload)
     .postRequest(201);
 
+  await expect(createArticleResponse).shouldMatchSchema(
+    "articles",
+    "POST_articles"
+  );
   expect(createArticleResponse.article.title).shouldEqual(titleCreate);
 
   const slugOriginal = createArticleResponse.article.slug;
@@ -87,6 +97,10 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .body(updatePayload)
     .putRequest(200);
 
+  await expect(updateArticleResponse).shouldMatchSchema(
+    "articles",
+    "PUT_articles"
+  );
   expect(updateArticleResponse.article.title).shouldEqual(titleUpdated);
 
   const newSlug = updateArticleResponse.article.slug;
@@ -97,6 +111,7 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listAfterUpdate).shouldMatchSchema("articles", "GET_articles");
   const exists = listAfterUpdate.articles.some(
     (a) => a.slug === newSlug && a.title === titleUpdated
   );
@@ -111,6 +126,7 @@ test("Create, Update and Delete Article", async ({ api }) => {
     .params({ limit: 10, offset: 0 })
     .getRequest(200);
 
+  await expect(listAfterDelete).shouldMatchSchema("articles", "GET_articles");
   const stillExists = listAfterDelete.articles.some((a) => a.slug === newSlug);
 
   expect(stillExists).shouldEqual(false);
